@@ -6,7 +6,8 @@
     "Microsoft.AspNetCore.Server.Kestrel": "1.0.0",
     "Microsoft.Extensions.Logging.Console": "1.0.0",
     "Microsoft.Extensions.Logging.AzureWebAppDiagnostics": "1.1.0-*",
-    "Microsoft.Extensions.Configuration.Azure.KeyVault": "0.1.0-*"
+    "Microsoft.Extensions.Configuration.Azure.KeyVault": "0.1.0-*",
+    "Microsoft.AspNetCore.DataProtection.Azure.Blob": "0.1.0-*"
   },
 
   "tools": {

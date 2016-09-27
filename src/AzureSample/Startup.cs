@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -7,16 +8,23 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Linq;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.Azure.Blob;
 
 namespace AzureSample
 {
     public class Startup
     {
+        private IConfigurationRoot _config;
+
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit http://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            _config = GetConfiguration();
+
             services.AddLogging();
+            services.AddDataProtection().PersistKeysToAzureBlobStorage(new Uri(_config["DataProtectionKeys"]));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -30,21 +38,21 @@ namespace AzureSample
                 app.UseDeveloperExceptionPage();
             }
 
-            var config = GetConfiguration(env);
-
             app.Run(async (context) =>
             {
                 var logger = context.RequestServices.GetService<ILogger<Startup>>();
+                var protector = context.RequestServices.GetService<IDataProtectionProvider>().CreateProtector("");
+
                 logger.LogTrace("Request query string is '{query}'.", context.Request.QueryString.Value);
                 logger.LogWarning("The time is now {Time}, it's getting late!", DateTimeOffset.Now);
-                await context.Response.WriteAsync("KeyVault configuration property value is '" + config["KeyVaultConfigProperty"]+"'");
+                await context.Response.WriteAsync("Protected data: "+ protector.Protect(context.Request.QueryString.Value));
             });
         }
 
-        private IConfigurationRoot GetConfiguration(IHostingEnvironment env)
+        private IConfigurationRoot GetConfiguration()
         {
             var builder = new ConfigurationBuilder();
-            builder.SetFileProvider(env.ContentRootFileProvider);
+            builder.SetBasePath(Directory.GetCurrentDirectory());
             builder.AddJsonFile("settings.json");
 
             var config = builder.Build();
